@@ -52,19 +52,20 @@ try {
       const statePath = `state/${card.day}/${channel.service}.json`;
       const stored = await readRepoFile(repo, statePath);
       const state = stored ? JSON.parse(stored.bytes.toString('utf8')) : null;
-      const existing = duplicatePost(await listDayPosts(channel, card), card);
+      const existing = duplicatePost(await listDayPosts(channel, card), card, state);
       if (existing) {
         if (existing.status !== 'sent' && Date.parse(existing.dueAt) < Date.now() - 3600000) throw new Error(`${channel.service} is still ${existing.status} more than an hour after its due time. Review Buffer.`);
         report.posts.push({ service: channel.service, status: existing.status, id: existing.id, url: existing.externalLink || null, reused: true });
-        await writeRepoFile(repo, statePath, Buffer.from(JSON.stringify({ day: card.day, card: card.key, outcome: 'accepted', postId: existing.id }, null, 2)), `Confirm ${channel.service} for ${card.day}`);
+        await writeRepoFile(repo, statePath, Buffer.from(JSON.stringify({ day: card.day, card: card.key, outcome: 'accepted', postId: existing.id, caption: existing.text }, null, 2)), `Confirm ${channel.service} for ${card.day}`);
         console.log(`${channel.service}: already ${existing.status}. No duplicate created.`);
         continue;
       }
       assertNoUncertainSubmission(state);
       if (dayKey(new Date()) !== card.day) throw new Error('The Eastern date changed before publishing. Nothing further will be submitted.');
-      await writeRepoFile(repo, statePath, Buffer.from(JSON.stringify({ day: card.day, card: card.key, outcome: 'pending', startedAt: new Date().toISOString() }, null, 2)), `Reserve ${channel.service} for ${card.day}`);
-      const post = await createPost(postInput(card, channel, imageUrl, publishingTime(new Date(), config.publishHour, config.publishMinute)));
-      await writeRepoFile(repo, statePath, Buffer.from(JSON.stringify({ day: card.day, card: card.key, outcome: 'accepted', postId: post.id }, null, 2)), `Confirm ${channel.service} for ${card.day}`);
+      const input = postInput(card, channel, imageUrl, publishingTime(new Date(), config.publishHour, config.publishMinute));
+      await writeRepoFile(repo, statePath, Buffer.from(JSON.stringify({ day: card.day, card: card.key, outcome: 'pending', caption: input.text, startedAt: new Date().toISOString() }, null, 2)), `Reserve ${channel.service} for ${card.day}`);
+      const post = await createPost(input);
+      await writeRepoFile(repo, statePath, Buffer.from(JSON.stringify({ day: card.day, card: card.key, outcome: 'accepted', caption: input.text, postId: post.id }, null, 2)), `Confirm ${channel.service} for ${card.day}`);
       report.posts.push({ service: channel.service, status: post.status, id: post.id, url: post.externalLink || null });
       console.log(`${channel.service}: ${post.status} for ${post.dueAt}.`);
     }

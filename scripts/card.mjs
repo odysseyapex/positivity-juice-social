@@ -1,4 +1,6 @@
 import { parseHTML } from 'linkedom';
+import { createHash } from 'node:crypto';
+import { captionOverrides, captionThemes } from '../content/captions.mjs';
 
 export const ZONE = 'America/New_York';
 export function localParts(now = new Date()) {
@@ -25,10 +27,11 @@ export function parseCard(html, now = new Date()) {
   const action = clean(card.querySelector('.sip:not(.dare) p')?.textContent);
   const extra = clean(card.querySelector('.sip.dare p')?.textContent);
   const category = clean(card.querySelector('.pill')?.textContent);
+  const theme = clean(card.querySelector('.jc-no')?.textContent);
   if (!message || !action || !category || message.length > 800 || action.length > 700) throw new Error('The website card is incomplete or unexpectedly long.');
   // Keep source text exact. Do not silently rewrite a card that conflicts with Adam's style.
   if ([message, action, category].some(t => /[\u2014\u2013-]/.test(t))) throw new Error('The website card contains a dash. Review the source card before posting.');
-  return { key, day: dayKey(now), date, category, message, action, extra, url: `https://positivityjuice.com/card/${key}` };
+  return { key, day: dayKey(now), date, category, theme, message, action, extra, url: `https://positivityjuice.com/card/${key}` };
 }
 
 export async function getLiveCard(now = new Date(), fetchImpl = fetch) {
@@ -46,14 +49,16 @@ export async function getLiveCard(now = new Date(), fetchImpl = fetch) {
 }
 
 export function caption(card, service) {
-  const lines = [
-    `Today's Pour | ${card.date} 💙`, '', card.message, '',
-    `One small thing: ${card.action}`, '',
-    `Send a little good to someone: ${card.url}`, '',
-    '#PositivityJuice #TodaysPour #DailyEncouragement',
-  ];
-  const result = lines.join(service === 'tiktok' ? ' ' : '\n');
-  if (result.length > 2100) throw new Error('Caption is too long.');
+  const flavor = card.key.split('-')[0];
+  const override = captionOverrides[card.key];
+  const options = captionThemes[flavor]?.[card.theme];
+  const seed = createHash('sha256').update(`${card.key}|${card.message}|${card.action}`).digest().readUInt32BE(0);
+  const body = override?.message === card.message ? override.text : options?.[seed % options.length];
+  if (!body) throw new Error(`No reviewed caption is available for ${flavor}: ${card.theme}.`);
+  if (/https?:|www\.|[\u2014\u2013-]/i.test(body) || [card.message, card.action, card.extra].some(text => text && body.includes(text))) throw new Error('Caption must add original commentary without links, dashes, or copying the card.');
+  const hashtag = flavor[0].toUpperCase() + flavor.slice(1);
+  const result = `${body}${service === 'tiktok' ? '\n' : '\n\n'}#PositivityJuice #TodaysPour #${hashtag}`;
+  if (result.length > 1000) throw new Error('Caption is too long.');
   return result;
 }
 
@@ -80,12 +85,15 @@ export function selectChannels(accounts, expected) {
   return selected;
 }
 
-export function duplicatePost(posts, card) {
-  const matches = posts.filter(p => p.text?.includes(`Today's Pour | ${card.date}`));
+export function duplicatePost(posts, card, state = null) {
+  if (state?.card && state.card !== card.key) throw new Error('A different card has already been prepared for this date. Review Buffer.');
+  const texts = new Set([caption(card, 'instagram'), caption(card, 'tiktok'), state?.caption].filter(Boolean));
+  const legacyTitle = `Today's Pour | ${card.date}`;
+  const matches = posts.filter(p => p.id === state?.postId || texts.has(p.text) || p.text?.includes(legacyTitle));
   if (matches.length > 1) throw new Error('More than one Today’s Pour post already exists for this day. Review Buffer before continuing.');
   if (!matches.length) return null;
   const found = matches[0];
-  if (!found.text.includes(card.url)) throw new Error('A different card has already been prepared for this date. Review Buffer.');
+  if (found.text?.includes(legacyTitle) && !found.text.includes(card.url)) throw new Error('A different card has already been prepared for this date. Review Buffer.');
   if (['error', 'draft', 'needs_approval'].includes(found.status)) throw new Error(`Today’s Pour already exists with status ${found.status}. Resolve that post in Buffer instead of creating another.`);
   if (found.schedulingType !== 'automatic') throw new Error('The existing post requires manual publishing. Review Buffer.');
   return found;
@@ -98,11 +106,11 @@ export function assertNoUncertainSubmission(state) {
 export function postInput(card, channel, imageUrl, dueAt) {
   const metadata = channel.service === 'instagram'
     ? { instagram: { type: 'post', shouldShareToFeed: true } }
-    : { tiktok: { title: `Today's Pour | ${card.date}` } };
+    : { tiktok: { title: "Today's Pour 💙" } };
   return {
     text: caption(card, channel.service), channelId: channel.id,
     schedulingType: 'automatic', mode: 'customScheduled', dueAt,
     needsApproval: false, saveToDraft: false, aiAssisted: true, metadata,
-    assets: [{ image: { url: imageUrl, metadata: { altText: `Positivity Juice. ${card.category}. ${card.message} One small thing: ${card.action}` } } }],
+    assets: [{ image: { url: imageUrl, metadata: { altText: `Positivity Juice. ${card.category}. ${card.message} Tiny action: ${card.action} If you are feeling brave: ${card.extra}` } } }],
   };
 }

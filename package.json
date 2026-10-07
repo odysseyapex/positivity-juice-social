@@ -11,8 +11,8 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@napi-rs/canvas": "1.0.10",
     "libsodium-wrappers": "0.8.4",
-    "linkedom": "0.18.13"
+    "linkedom": "0.18.13",
+    "playwright": "1.63.0"
   }
 }

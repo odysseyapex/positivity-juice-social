@@ -39,6 +39,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install browser for the website card export
+        run: npx playwright install --with-deps chromium
       - name: Check date, account, and duplicate protection
         run: npm test
       - name: Prepare or publish today's card

@@ -1,61 +1,40 @@
-import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
-import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
 
-GlobalFonts.registerFromPath(fileURLToPath(new URL('../assets/fonts/Fredoka.ttf', import.meta.url)), 'Fredoka');
-GlobalFonts.registerFromPath(fileURLToPath(new URL('../assets/fonts/DM-Sans.ttf', import.meta.url)), 'DM Sans');
-
-const colors = { cream: '#FFF9ED', navy: '#0F2E63', blue: '#2BA6FA', light: '#E9F2FE', white: '#FFFFFF', yellow: '#FFD836' };
-function wrap(ctx, text, width) {
-  const lines = []; let line = '';
-  for (const word of text.split(/\s+/)) {
-    const candidate = line ? `${line} ${word}` : word;
-    if (ctx.measureText(candidate).width > width && line) { lines.push(line); line = word; }
-    else line = candidate;
-  }
-  if (line) lines.push(line);
-  return lines;
+export function decodeWebsiteImage(url) {
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(url || '')) throw new Error('The website did not provide a downloadable PNG.');
+  const bytes = Buffer.from(url.split(',')[1], 'base64');
+  if (bytes.length < 1000 || bytes.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw new Error('The website export is not a valid PNG.');
+  const width = bytes.readUInt32BE(16), height = bytes.readUInt32BE(20);
+  if (width !== 1080 || height !== 1350) throw new Error(`The website export changed size to ${width} by ${height}. Review it before posting.`);
+  return { bytes, layout: { width, height, source: 'website-save-image' } };
 }
-function fittedText(ctx, text, box, options = {}) {
-  const { family = 'DM Sans', weight = 400, max = 48, min = 24, lineHeight = 1.22 } = options;
-  for (let size = max; size >= min; size--) {
-    ctx.font = `${weight} ${size}px "${family}"`;
-    const lines = wrap(ctx, text, box.width);
-    if (lines.length * size * lineHeight <= box.height && lines.every(line => ctx.measureText(line).width <= box.width)) {
-      lines.forEach((line, i) => ctx.fillText(line, box.x, box.y + i * size * lineHeight));
-      return { size, lines: lines.length };
-    }
-  }
-  throw new Error('Card text does not fit the artwork. Nothing will be published.');
-}
-function round(ctx, x, y, w, h, radius, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.roundRect(x, y, w, h, radius); ctx.fill(); }
 
 export async function renderCard(card) {
-  const canvas = createCanvas(1080, 1350), ctx = canvas.getContext('2d');
-  ctx.textBaseline = 'top';
-  ctx.fillStyle = colors.cream; ctx.fillRect(0, 0, 1080, 1350);
-  round(ctx, 0, 0, 1080, 18, 0, colors.blue);
-  const logo = await loadImage(fileURLToPath(new URL('../assets/pj-logo.png', import.meta.url)));
-  const logoHeight = 175, logoWidth = logo.width * logoHeight / logo.height;
-  ctx.drawImage(logo, 878, 65, logoWidth, logoHeight);
-  ctx.fillStyle = colors.navy;
-  ctx.font = '700 25px "DM Sans"'; ctx.fillText('POSITIVITY JUICE', 76, 77);
-  ctx.font = '600 76px "Fredoka"'; ctx.fillText("Today's Pour", 72, 127);
-  ctx.font = '400 26px "DM Sans"'; ctx.fillText(card.date, 76, 221);
-
-  round(ctx, 62, 289, 956, 619, 40, colors.navy);
-  round(ctx, 56, 280, 956, 619, 40, colors.white);
-  round(ctx, 93, 320, 380, 60, 30, colors.light);
-  ctx.fillStyle = colors.navy;
-  ctx.font = '700 26px "DM Sans"'; ctx.fillText(card.category.toUpperCase(), 119, 335);
-  const messageLayout = fittedText(ctx, card.message, { x: 99, y: 423, width: 877, height: 377 }, { family: 'Fredoka', weight: 600, max: 72, min: 38, lineHeight: 1.16 });
-  round(ctx, 101, 839, 128, 8, 4, colors.blue);
-
-  round(ctx, 56, 939, 956, 249, 32, colors.light);
-  ctx.fillStyle = colors.navy;
-  ctx.font = '700 26px "DM Sans"'; ctx.fillText('ONE SMALL THING', 96, 969);
-  const actionLayout = fittedText(ctx, card.action, { x: 96, y: 1015, width: 867, height: 148 }, { max: 38, min: 26, lineHeight: 1.25 });
-  ctx.font = '600 30px "Fredoka"'; ctx.fillText('Pour something good into your day.', 74, 1234);
-  ctx.font = '700 23px "DM Sans"'; ctx.fillText('positivityjuice.com', 74, 1283);
-  ctx.font = '400 23px "DM Sans"'; ctx.textAlign = 'right'; ctx.fillText('@positivity_juice', 1006, 1283);
-  return { bytes: canvas.toBuffer('image/png'), layout: { width: 1080, height: 1350, message: messageLayout, action: actionLayout } };
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, timezoneId: 'America/New_York' });
+    const response = await page.goto(card.url, { waitUntil: 'networkidle', timeout: 45000 });
+    if (!response?.ok()) throw new Error('The website card page could not be opened.');
+    const article = page.locator(`#cardSlot article[data-key="${card.key}"]`);
+    await article.waitFor();
+    const clean = text => text.replace(/\s+/g, ' ').trim();
+    for (const [selector, expected] of [['.jc-msg', card.message], ['.sip:not(.dare) p', card.action], ['.sip.dare p', card.extra]]) {
+      if (clean(await article.locator(selector).innerText()) !== expected) throw new Error('The card being downloaded disagrees with today’s website card.');
+    }
+    // Save the site's own Download data URL unchanged, with its live fonts and artwork.
+    const fontsReady = await page.evaluate(async () => {
+      const fonts = ['600 34px Fredoka', '500 66px Fredoka', '400 40px "DM Sans"', '500 30px "DM Mono"'];
+      const loaded = await Promise.all(fonts.map(font => document.fonts.load(font)));
+      await document.fonts.ready;
+      return loaded.every(faces => faces.length > 0);
+    });
+    if (!fontsReady) throw new Error('The website card fonts did not load.');
+    await article.locator('.share-more summary').click();
+    await article.locator('[data-act="save"]').click();
+    await page.locator('#saveModal').waitFor({ state: 'visible' });
+    const image = await page.locator('#saveImg').getAttribute('src');
+    const download = await page.locator('#saveDl').getAttribute('href');
+    if (image !== download) throw new Error('The website preview and download disagree.');
+    return decodeWebsiteImage(download);
+  } finally { await browser.close(); }
 }
