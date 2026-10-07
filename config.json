@@ -3,6 +3,8 @@
   "timezone": "America/New_York",
   "publishHour": 9,
   "publishMinute": 0,
+  "reelPublishHour": 19,
+  "reelPublishMinute": 0,
   "expectedHandles": { "instagram": "positivity_juice", "tiktok": "positivity_juice" },
   "repository": "odysseyapex/positivity-juice-social"
 }

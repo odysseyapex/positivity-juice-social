@@ -37,3 +37,39 @@ export async function writeRepoFile(repo, path, bytes, message) {
   if (previous && previous.bytes.equals(bytes)) return;
   await githubRequest(`/repos/${repo}/contents/${path}`, 'PUT', { message, content: bytes.toString('base64'), branch: 'main', ...(previous ? { sha: previous.sha } : {}) });
 }
+
+export async function publishReelAsset(repo, filename, bytes, digest) {
+  if (!/^\d{4}-\d{2}-\d{2}-[a-z]+-\d+-[a-f0-9]{12}\.mp4$/.test(filename)) throw new Error('Unexpected Reel filename.');
+  const tag = `social-reels-${filename.slice(0, 7)}`;
+  let release;
+  try { release = await githubRequest(`/repos/${repo}/releases/tags/${tag}`); }
+  catch (error) {
+    if (!error.message.includes('HTTP 404:')) throw error;
+    try {
+      release = await githubRequest(`/repos/${repo}/releases`, 'POST', { tag_name: tag, target_commitish: 'main', name: `Positivity Juice Reels ${filename.slice(0, 7)}`, body: 'Finished Positivity Juice social videos. Licensed footage and music are incorporated into original branded edits. Raw stock assets are not distributed.', draft: false, prerelease: false, make_latest: 'false' });
+    } catch (createError) {
+      // Reconcile uncertain release creation before attempting any upload.
+      release = await githubRequest(`/repos/${repo}/releases/tags/${tag}`).catch(() => { throw createError; });
+    }
+  }
+  const assets = [];
+  for (let page = 1; page <= 5; page++) {
+    const rows = await githubRequest(`/repos/${repo}/releases/${release.id}/assets?per_page=100&page=${page}`);
+    assets.push(...rows);
+    if (rows.length < 100) break;
+    if (page === 5) throw new Error('Release asset inventory is incomplete.');
+  }
+  let asset = assets.find(a => a.name === filename);
+  if (!asset) {
+    const upload = new URL(release.upload_url.replace(/\{.*$/, ''));
+    if (upload.protocol !== 'https:' || upload.hostname !== 'uploads.github.com') throw new Error('Unexpected GitHub upload destination.');
+    upload.searchParams.set('name', filename);
+    const response = await fetch(upload, { method: 'POST', headers: { Authorization: `Bearer ${githubToken()}`, Accept: 'application/vnd.github+json', 'Content-Type': 'video/mp4' }, body: bytes, signal: AbortSignal.timeout(120000) });
+    if (!response.ok) throw new Error(`Reel upload returned HTTP ${response.status}. Inspect the release before retrying.`);
+    asset = await response.json();
+  }
+  if (asset.size !== bytes.length || (asset.digest && asset.digest !== `sha256:${digest}`)) throw new Error('Hosted Reel does not match the rendered file.');
+  const response = await fetch(asset.browser_download_url, { signal: AbortSignal.timeout(120000) });
+  if (!response.ok || !Buffer.from(await response.arrayBuffer()).equals(bytes)) throw new Error('The public Reel is not ready for Buffer.');
+  return asset.browser_download_url;
+}

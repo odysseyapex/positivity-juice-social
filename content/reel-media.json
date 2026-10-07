@@ -1,0 +1,93 @@
+{
+  "video": {
+    "energy": {
+      "title": "Sun over hills",
+      "sourcePage": "https://mixkit.co/free-stock-video/sun-over-hills-1183/",
+      "license": "Mixkit Stock Video Free License",
+      "licenseUrl": "https://mixkit.co/license/#videoFree",
+      "url": "https://assets.mixkit.co/videos/1183/1183-1080.mp4",
+      "sha256": "4903e74bdfc9a7130ef4a1ddd4ed211d2bffe7573e14cf6df15e4af806d4a4a2",
+      "bytes": 33723653
+    },
+    "calm": {
+      "title": "Foaming waves on the shore of a beach",
+      "sourcePage": "https://mixkit.co/free-stock-video/foaming-waves-on-the-shore-of-a-beach-51505/",
+      "license": "Mixkit Stock Video Free License",
+      "licenseUrl": "https://mixkit.co/license/#videoFree",
+      "url": "https://assets.mixkit.co/videos/51505/51505-1080.mp4",
+      "sha256": "cf93a2d40151e2a37e7e0c33cf844bfb056f8c8e78026d789c6362f6356c961e",
+      "bytes": 78430747
+    },
+    "confidence": {
+      "title": "Slowly walking down a path in a park",
+      "sourcePage": "https://mixkit.co/free-stock-video/slowly-walking-down-a-path-in-a-park-40656/",
+      "license": "Mixkit Stock Video Free License",
+      "licenseUrl": "https://mixkit.co/license/#videoFree",
+      "url": "https://assets.mixkit.co/videos/40656/40656-1080.mp4",
+      "sha256": "86c5c38b358dfce28bcd23acda72f4d8bd0cae73f6551e243cc2adc520a6257b",
+      "bytes": 41714449
+    },
+    "gratitude": {
+      "title": "Milk being poured into a coffee cup",
+      "sourcePage": "https://mixkit.co/free-stock-video/milk-being-poured-into-a-coffee-cup-4993/",
+      "license": "Mixkit Stock Video Free License",
+      "licenseUrl": "https://mixkit.co/license/#videoFree",
+      "url": "https://assets.mixkit.co/videos/4993/4993-1080.mp4",
+      "sha256": "4f9d35d25100307d80462900ebc5f15a2ac7fd7243cf8f9beb5a934c17f85e3a",
+      "bytes": 45419466
+    },
+    "kindness": {
+      "title": "Bouquet of flowers",
+      "sourcePage": "https://mixkit.co/free-stock-video/bouquet-of-flowers-3242/",
+      "license": "Mixkit Stock Video Free License",
+      "licenseUrl": "https://mixkit.co/license/#videoFree",
+      "url": "https://assets.mixkit.co/videos/3242/3242-1080.mp4",
+      "sha256": "ee9d627a93927d2ed55779ebcd10e93b58ebabacc2656afde833a0d9f50445a0",
+      "bytes": 45042493
+    },
+    "laughter": {
+      "title": "Dog running in the meadow",
+      "sourcePage": "https://mixkit.co/free-stock-video/dog-running-in-the-meadow-3518/",
+      "license": "Mixkit Stock Video Free License",
+      "licenseUrl": "https://mixkit.co/license/#videoFree",
+      "url": "https://assets.mixkit.co/videos/3518/3518-1080.mp4",
+      "sha256": "7c2398eb1cd557c24a5eb1ef01f4de96e6e8b15c5c5f08ba23ca0d4c8de0a651",
+      "bytes": 62674624
+    }
+  },
+  "music": {
+    "Just Keep Walking": {
+      "title": "Just Keep Walking",
+      "author": "Michael Ramir C.",
+      "sourcePage": "https://mixkit.co/free-stock-music/tag/uplifting/",
+      "license": "Mixkit Stock Music Free License",
+      "licenseUrl": "https://mixkit.co/license/#musicFree",
+      "filename": "just-keep-walking.mp3",
+      "url": "https://assets.mixkit.co/music/963/963.mp3",
+      "sha256": "fa93f4808cecc643eee8d74647bd8b823991f2155672b7d37f3db79f9beb7e16",
+      "bytes": 3991554
+    },
+    "I Believe in Us": {
+      "title": "I Believe in Us",
+      "author": "Michael Ramir C.",
+      "sourcePage": "https://mixkit.co/free-stock-music/tag/uplifting/",
+      "license": "Mixkit Stock Music Free License",
+      "licenseUrl": "https://mixkit.co/license/#musicFree",
+      "filename": "i-believe-in-us.mp3",
+      "url": "https://assets.mixkit.co/music/1030/1030.mp3",
+      "sha256": "67ff5856b33595d1d527ea91f353d1ea4e1dc4242a5e89e9aaa05c380ad3d171",
+      "bytes": 5374954
+    },
+    "Dreaming of You": {
+      "title": "Dreaming of You",
+      "author": "Michael Ramir C.",
+      "sourcePage": "https://mixkit.co/free-stock-music/tag/uplifting/",
+      "license": "Mixkit Stock Music Free License",
+      "licenseUrl": "https://mixkit.co/license/#musicFree",
+      "filename": "dreaming-of-you.mp3",
+      "url": "https://assets.mixkit.co/music/952/952.mp3",
+      "sha256": "bce812ed2d91237a0c73d161cce74a8ae9f8966527ef85bfb42aef0550b5eee2",
+      "bytes": 4755583
+    }
+  }
+}

@@ -8,6 +8,7 @@
   "scripts": {
     "check:account": "node scripts/check-account.mjs",
     "preview": "node scripts/daily-pour.mjs --preview",
+    "preview:reel": "node scripts/daily-reel.mjs --preview",
     "test": "node --test"
   },
   "dependencies": {
