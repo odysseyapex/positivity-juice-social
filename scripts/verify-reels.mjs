@@ -15,7 +15,7 @@ try {
     const state = record && JSON.parse(record.bytes.toString('utf8'));
     if (!state?.postId || state.day !== day) throw new Error(`${channel.service} has no confirmed Reel for today.`);
     const { post } = await bufferQuery('query($input: PostInput!) { post(input: $input) { id channelId status dueAt externalLink schedulingType } }', { input: { id: state.postId } });
-    if (post.channelId !== channel.id || post.schedulingType !== 'automatic' || post.dueAt !== state.dueAt) throw new Error('The Reel account, schedule, or publishing method changed.');
+    if (post.channelId !== channel.id || post.schedulingType !== 'automatic' || Date.parse(post.dueAt) !== Date.parse(state.dueAt)) throw new Error('The Reel account, schedule, or publishing method changed.');
     result.posts.push({ service: channel.service, ...post });
     console.log(`${channel.service}: ${post.status}, ${post.dueAt}${post.externalLink ? ` ${post.externalLink}` : ''}`);
     if (!(queued ? ['scheduled', 'sending', 'sent'] : ['sent']).includes(post.status)) throw new Error(`${channel.service} Reel needs attention (${post.status}).`);
