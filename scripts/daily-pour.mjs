@@ -1,7 +1,7 @@
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { loadLocalEnv, getAccounts, listDayPosts, createPost } from './buffer.mjs';
-import { getLiveCard, parseCard, localParts, dayKey, caption, selectChannels, publishingTime, duplicatePost, postInput, assertNoUncertainSubmission } from './card.mjs';
+import { getLiveCard, parseCard, localParts, dayKey, caption, selectChannels, publishingTime, duplicatePost, postInput, assertNoUncertainSubmission, manualPostState } from './card.mjs';
 import { renderCard } from './render.mjs';
 import { readRepoFile, writeRepoFile, githubRequest } from './github.mjs';
 
@@ -52,6 +52,12 @@ try {
       const statePath = `state/${card.day}/${channel.service}.json`;
       const stored = await readRepoFile(repo, statePath);
       const state = stored ? JSON.parse(stored.bytes.toString('utf8')) : null;
+      const manual = manualPostState(state, card, channel.service);
+      if (manual) {
+        report.posts.push(manual);
+        console.log(`${channel.service}: handled manually (${manual.status}). No duplicate created.`);
+        continue;
+      }
       const existing = duplicatePost(await listDayPosts(channel, card), card, state);
       if (existing) {
         if (existing.status !== 'sent' && Date.parse(existing.dueAt) < Date.now() - 3600000) throw new Error(`${channel.service} is still ${existing.status} more than an hour after its due time. Review Buffer.`);

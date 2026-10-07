@@ -22,6 +22,8 @@ Before publishing, the workflow checks the recorded Buffer post ID, the saved ca
 
 Card images are stored under `cards/`. Submission records under `state/` contain the date, card key, and Buffer post ID. The workflow code, approved brand assets, card artwork, and submission records are public. The API key is never committed. Only the publishing step receives the secret.
 
+Posts replaced directly on a platform have a manual record with the replacement URL and observed status. A manual record also reserves a post awaiting its music step. Both prevent automatic duplicates for that specific date. Verification reports the saved observation time for native posts. Deleted originals may still appear as sent in Buffer, so they are retained only as replacement history.
+
 If a run fails, open GitHub Actions and read the saved report. Review the corresponding Buffer post before retrying. Never remove a pending submission record until Buffer confirms that no post was created. Keep GitHub workflow failure notifications enabled in your account settings.
 
 This workflow handles one daily card on each platform. Reels, stories, other daily posts, and music remain separate. No premium newsletter content is read or published.

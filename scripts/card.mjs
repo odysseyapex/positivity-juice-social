@@ -102,6 +102,14 @@ export function assertNoUncertainSubmission(state) {
   if (state) throw new Error('An earlier submission record has no matching Buffer post. Review it before retrying.');
 }
 
+export function manualPostState(state, card, service) {
+  if (state?.outcome !== 'manual') return null;
+  if (state.day !== card.day || state.card !== card.key || state.service !== service) throw new Error('Manual post record does not match this card, date, and platform.');
+  if (!['awaiting_music', 'under_review', 'sent'].includes(state.status)) throw new Error('Manual post status needs review.');
+  if (state.status === 'sent' && (!state.externalLink || !state.verifiedAt)) throw new Error('Manual publication has no saved verification.');
+  return { service, status: state.status, url: state.externalLink || null, manual: true, reused: true, verifiedAt: state.verifiedAt || null };
+}
+
 export function postInput(card, channel, imageUrl, dueAt) {
   const metadata = channel.service === 'instagram'
     ? { instagram: { type: 'post', shouldShareToFeed: true } }

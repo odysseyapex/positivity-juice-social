@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCard, getLiveCard, dayKey, publishingTime, caption, selectChannels, duplicatePost, postInput, assertNoUncertainSubmission } from '../scripts/card.mjs';
+import { parseCard, getLiveCard, dayKey, publishingTime, caption, selectChannels, duplicatePost, postInput, assertNoUncertainSubmission, manualPostState } from '../scripts/card.mjs';
 import { listDayPosts, createPost } from '../scripts/buffer.mjs';
 import { decodeWebsiteImage } from '../scripts/render.mjs';
 import { captionThemes } from '../content/captions.mjs';
@@ -69,6 +69,18 @@ test('duplicate lookup follows every Buffer page with valid query variables', as
   });
   assert.equal(calls, 2);
   assert.deepEqual(posts.map(p => p.id), ['p1', 'p2']);
+});
+
+test('native replacements and music handoffs suppress automatic duplicates only for the recorded day', () => {
+  const state = { outcome: 'manual', day: card.day, card: card.key, service: 'tiktok', status: 'sent', externalLink: 'https://www.tiktok.com/@positivity_juice/video/7693948923337133342', verifiedAt: '2026-10-07T15:34:00Z' };
+  assert.equal(manualPostState(state, card, 'tiktok').status, 'sent');
+  assert.equal(manualPostState({ ...state, service: 'instagram', status: 'awaiting_music', externalLink: null, verifiedAt: null }, card, 'instagram').manual, true);
+  assert.equal(manualPostState(null, card, 'instagram'), null);
+  assert.equal(manualPostState({ outcome: 'accepted' }, card, 'instagram'), null);
+  assert.throws(() => manualPostState(state, { ...card, day: '2026-10-08' }, 'tiktok'), /does not match/);
+  assert.throws(() => manualPostState(state, { ...card, key: 'gratitude-86' }, 'tiktok'), /does not match/);
+  assert.throws(() => manualPostState(state, card, 'instagram'), /does not match/);
+  assert.throws(() => manualPostState({ ...state, verifiedAt: null }, card, 'tiktok'), /no saved verification/);
 });
 
 test('uncertain Buffer mutation is attempted once only', async () => {

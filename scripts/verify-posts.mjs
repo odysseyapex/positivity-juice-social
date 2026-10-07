@@ -1,6 +1,6 @@
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { loadLocalEnv, getAccounts, bufferQuery } from './buffer.mjs';
-import { dayKey, selectChannels } from './card.mjs';
+import { dayKey, selectChannels, manualPostState } from './card.mjs';
 import { readRepoFile } from './github.mjs';
 
 loadLocalEnv();
@@ -12,6 +12,13 @@ try {
   for (const channel of selectChannels(await getAccounts(), config.expectedHandles)) {
     const record = await readRepoFile(repo, `state/${day}/${channel.service}.json`);
     const state = record && JSON.parse(record.bytes.toString('utf8'));
+    const manual = manualPostState(state, { day, key: state?.card }, channel.service);
+    if (manual) {
+      result.posts.push(manual);
+      console.log(`${channel.service}: saved manual status ${manual.status}${manual.url ? ` ${manual.url}` : ''}${manual.verifiedAt ? ` (observed ${manual.verifiedAt})` : ''}`);
+      if (manual.status !== 'sent') throw new Error(`${channel.service} still requires the manual publishing step.`);
+      continue;
+    }
     if (!state?.postId) throw new Error(`${channel.service} has no confirmed post for today.`);
     const { post } = await bufferQuery('query($input: PostInput!) { post(input: $input) { id channelId status dueAt externalLink schedulingType } }', { input: { id: state.postId } });
     if (post.channelId !== channel.id || post.schedulingType !== 'automatic') throw new Error('Buffer returned a different account or publishing method.');

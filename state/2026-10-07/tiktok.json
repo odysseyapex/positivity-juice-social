@@ -1,6 +1,14 @@
 {
   "day": "2026-10-07",
   "card": "gratitude-87",
-  "outcome": "accepted",
-  "postId": "6ac655280f4d385dd634505c"
+  "outcome": "manual",
+  "service": "tiktok",
+  "status": "sent",
+  "externalLink": "https://www.tiktok.com/@positivity_juice/video/7693948923337133342",
+  "verifiedAt": "2026-10-07T15:34:00Z",
+  "location": "London, England, United Kingdom",
+  "music": "Peaceful Notes by Líricus Instrumental",
+  "musicUrl": "https://www.tiktok.com/music/Peaceful-Notes-7676815548826650641",
+  "caption": "Ever remember something kind someone did years ago and wonder if it would be weird to bring it up now? Send the text. They might have no idea you still carry that moment with you. 💙\n\n#PositivityJuice #TodaysPour #Gratitude",
+  "replaces": { "postId": "6ac655280f4d385dd634505c", "deletedByUser": true }
 }
