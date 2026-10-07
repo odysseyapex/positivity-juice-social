@@ -3,9 +3,19 @@
   "card": "gratitude-87",
   "outcome": "manual",
   "service": "instagram",
-  "status": "awaiting_music",
+  "status": "sent",
   "location": "London, England, United Kingdom",
   "caption": "Ever remember something kind someone did years ago and wonder if it would be weird to bring it up now? Send the text. They might have no idea you still carry that moment with you. 💙\n\n#PositivityJuice #TodaysPour #Gratitude",
-  "note": "Exact card, caption and London prepared in native web composer. Awaiting choice to finish music on phone or publish without music.",
-  "replaces": { "postId": "6ac65525002d92909c8440e4", "deletedByUser": true }
+  "note": "Full original website card in a still video with embedded piano music. Verified native shared confirmation, post, caption, London location and enabled audio.",
+  "replaces": {
+    "postId": "6ac65525002d92909c8440e4",
+    "deletedByUser": true
+  },
+  "externalLink": "https://www.instagram.com/p/DeMtW7mhuHP/",
+  "verifiedAt": "2026-10-07T15:46:51.566Z",
+  "format": "reel",
+  "durationSeconds": 16,
+  "music": "Emotional Piano by triangelx",
+  "musicSource": "https://freesound.org/people/triangelx/sounds/189175/",
+  "musicLicense": "CC0 1.0"
 }
