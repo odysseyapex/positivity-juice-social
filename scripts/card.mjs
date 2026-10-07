@@ -29,8 +29,7 @@ export function parseCard(html, now = new Date()) {
   const category = clean(card.querySelector('.pill')?.textContent);
   const theme = clean(card.querySelector('.jc-no')?.textContent);
   if (!message || !action || !category || message.length > 800 || action.length > 700) throw new Error('The website card is incomplete or unexpectedly long.');
-  // Keep source text exact. Do not silently rewrite a card that conflicts with Adam's style.
-  if ([message, action, category].some(t => /[\u2014\u2013-]/.test(t))) throw new Error('The website card contains a dash. Review the source card before posting.');
+  // Preserve the website card verbatim. Writing preferences are applied to our caption.
   return { key, day: dayKey(now), date, category, theme, message, action, extra, url: `https://positivityjuice.com/card/${key}` };
 }
 

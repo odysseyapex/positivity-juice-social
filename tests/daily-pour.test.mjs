@@ -17,6 +17,7 @@ test('live source must match the Eastern date and its stable card', async () => 
   assert.throws(() => parseCard(html.replace('Oct 7', 'Oct 6'), now), /Website date/);
   assert.throws(() => parseCard(html.replace('data-key="gratitude-87"', 'data-key="gratitude-86"'), now), /inconsistent/);
   assert.equal(dayKey(new Date('2026-10-08T02:00:00Z')), '2026-10-07');
+  assert.equal(parseCard(html.replace('Name the detail.', 'Name the detail—then send it.'), now).extra, 'Name the detail—then send it.');
   let calls = 0;
   const mock = async () => new Response(++calls === 1 ? html : `<div id="cardSlot">${article.replace('Thank you loses', 'Something else loses')}</div>`, { headers: { 'content-type': 'text/html' } });
   await assert.rejects(getLiveCard(now, mock), /disagree/);
