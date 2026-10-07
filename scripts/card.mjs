@@ -1,0 +1,108 @@
+import { parseHTML } from 'linkedom';
+
+export const ZONE = 'America/New_York';
+export function localParts(now = new Date()) {
+  return Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now).filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+}
+export function dayKey(now = new Date()) {
+  const p = localParts(now);
+  return `${p.year}-${p.month}-${p.day}`;
+}
+export function dateLabel(now = new Date()) {
+  return new Intl.DateTimeFormat('en-US', { timeZone: ZONE, month: 'short', day: 'numeric', year: 'numeric' }).format(now);
+}
+const clean = text => (text || '').replace(/\s+/g, ' ').trim();
+
+export function parseCard(html, now = new Date()) {
+  const { document } = parseHTML(html);
+  const slot = document.querySelector('#dailySlot');
+  const card = slot?.querySelector('article.juice-card');
+  const key = slot?.getAttribute('data-key');
+  const date = clean(document.querySelector('#dailyDate')?.textContent);
+  if (date !== dateLabel(now)) throw new Error(`Website date is ${date || 'missing'}, expected ${dateLabel(now)}. Nothing will be posted.`);
+  if (!key || !/^(energy|calm|confidence|gratitude|kindness|laughter)-(?:[1-9]\d?|100)$/.test(key) || card?.getAttribute('data-key') !== key) throw new Error('Website daily card is missing or inconsistent.');
+  const message = clean(card.querySelector('.jc-msg')?.textContent);
+  const action = clean(card.querySelector('.sip:not(.dare) p')?.textContent);
+  const extra = clean(card.querySelector('.sip.dare p')?.textContent);
+  const category = clean(card.querySelector('.pill')?.textContent);
+  if (!message || !action || !category || message.length > 800 || action.length > 700) throw new Error('The website card is incomplete or unexpectedly long.');
+  // Keep source text exact. Do not silently rewrite a card that conflicts with Adam's style.
+  if ([message, action, category].some(t => /[\u2014\u2013-]/.test(t))) throw new Error('The website card contains a dash. Review the source card before posting.');
+  return { key, day: dayKey(now), date, category, message, action, extra, url: `https://positivityjuice.com/card/${key}` };
+}
+
+export async function getLiveCard(now = new Date(), fetchImpl = fetch) {
+  const response = await fetchImpl(`https://positivityjuice.com/daily?social_date=${dayKey(now)}`, { headers: { 'Cache-Control': 'no-cache' }, signal: AbortSignal.timeout(30000), redirect: 'error' });
+  if (!response.ok) throw new Error(`Website returned HTTP ${response.status}.`);
+  if (!response.headers.get('content-type')?.includes('text/html')) throw new Error('Website did not return HTML.');
+  const card = parseCard(await response.text(), now);
+  // A second check against the stable permalink prevents a stale or mixed page from being used.
+  const permalink = await fetchImpl(card.url, { signal: AbortSignal.timeout(30000), redirect: 'error' });
+  if (!permalink.ok) throw new Error('The card permalink is unavailable.');
+  const { document } = parseHTML(await permalink.text());
+  const article = document.querySelector(`#cardSlot article[data-key="${card.key}"]`);
+  if (clean(article?.querySelector('.jc-msg')?.textContent) !== card.message || clean(article?.querySelector('.sip:not(.dare) p')?.textContent) !== card.action) throw new Error('Daily card and its permalink disagree.');
+  return card;
+}
+
+export function caption(card, service) {
+  const lines = [
+    `Today's Pour | ${card.date} 💙`, '', card.message, '',
+    `One small thing: ${card.action}`, '',
+    `Send a little good to someone: ${card.url}`, '',
+    '#PositivityJuice #TodaysPour #DailyEncouragement',
+  ];
+  const result = lines.join(service === 'tiktok' ? ' ' : '\n');
+  if (result.length > 2100) throw new Error('Caption is too long.');
+  return result;
+}
+
+export function publishingTime(now = new Date(), hour = 9, minute = 0) {
+  // Find today's clock time in Eastern time. Works on both sides of DST without fixed offsets.
+  const p = localParts(now);
+  const approximate = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), hour + 4, minute);
+  for (const candidate of [approximate, approximate + 3600000]) {
+    const local = localParts(new Date(candidate));
+    if (local.hour === String(hour).padStart(2, '0') && local.minute === String(minute).padStart(2, '0') && dayKey(new Date(candidate)) === dayKey(now)) return new Date(Math.max(candidate, now.getTime() + 120000)).toISOString();
+  }
+  throw new Error('Could not determine today’s Eastern publishing time.');
+}
+
+export function selectChannels(accounts, expected) {
+  const selected = [];
+  for (const [service, handle] of Object.entries(expected)) {
+    const matches = accounts.flatMap(a => a.channels).filter(c => c.service === service && c.name.replace(/^@/, '').toLowerCase() === handle.toLowerCase());
+    if (matches.length !== 1) throw new Error(`Connect exactly one ${service} account named @${handle} in Buffer. Found ${matches.length}.`);
+    const channel = matches[0];
+    if (channel.isDisconnected || channel.isLocked || channel.isQueuePaused) throw new Error(`${service} is disconnected, locked, or paused in Buffer.`);
+    selected.push(channel);
+  }
+  return selected;
+}
+
+export function duplicatePost(posts, card) {
+  const matches = posts.filter(p => p.text?.includes(`Today's Pour | ${card.date}`));
+  if (matches.length > 1) throw new Error('More than one Today’s Pour post already exists for this day. Review Buffer before continuing.');
+  if (!matches.length) return null;
+  const found = matches[0];
+  if (!found.text.includes(card.url)) throw new Error('A different card has already been prepared for this date. Review Buffer.');
+  if (['error', 'draft', 'needs_approval'].includes(found.status)) throw new Error(`Today’s Pour already exists with status ${found.status}. Resolve that post in Buffer instead of creating another.`);
+  if (found.schedulingType !== 'automatic') throw new Error('The existing post requires manual publishing. Review Buffer.');
+  return found;
+}
+
+export function assertNoUncertainSubmission(state) {
+  if (state) throw new Error('An earlier submission record has no matching Buffer post. Review it before retrying.');
+}
+
+export function postInput(card, channel, imageUrl, dueAt) {
+  const metadata = channel.service === 'instagram'
+    ? { instagram: { type: 'post', shouldShareToFeed: true } }
+    : { tiktok: { title: `Today's Pour | ${card.date}` } };
+  return {
+    text: caption(card, channel.service), channelId: channel.id,
+    schedulingType: 'automatic', mode: 'customScheduled', dueAt,
+    needsApproval: false, saveToDraft: false, aiAssisted: true, metadata,
+    assets: [{ image: { url: imageUrl, metadata: { altText: `Positivity Juice. ${card.category}. ${card.message} One small thing: ${card.action}` } } }],
+  };
+}
