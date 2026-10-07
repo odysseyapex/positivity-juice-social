@@ -1,6 +1,6 @@
 # Positivity Juice daily social publishing
 
-Publishes one Today's Pour card at 9 AM Eastern and one B roll Reel at 7 PM Eastern to @positivity_juice on both Instagram and TikTok each day. The card comes from the live public website's exact Save image PNG at 1080 × 1350. The Reel combines moving footage, a website message, one small action, and licensed music at 1080 × 1920.
+Publishes one Today's Pour card at 9 AM Eastern and one B roll Reel at 7 PM Eastern to @positivity_juice on both Instagram and TikTok each day. The card comes from the live public website's exact Save image PNG at 1080 × 1350. The Reel combines moving footage, one website message, the official logo, and licensed music at 1080 × 1920.
 
 Captions add a short, relatable human observation. They do not repeat the card or include a website link. The original caption library covers the website's 60 existing themes, with a specific caption for the October 7 gratitude card. New website themes stop for an editorial update. Caption selection is stable across retries and does not require another API key or model subscription.
 
@@ -32,7 +32,7 @@ If a run fails, open GitHub Actions and read the saved report. Review the corres
 
 The six day rotation starts October 7, 2026: Energy, Calm, Confidence, Gratitude, Kindness, Laughter. Each category returns with a different message from the public website library. All 600 messages are visited before the rotation repeats. The live source permalink must still match before any Reel is published.
 
-Each 16 second Reel shows a message for nine seconds and an action for seven seconds. The first footage library includes sunrise, waves, a park walk, coffee, flowers, and a dog. Footage repeats by category while the message changes. Captions add human commentary without copying the card or adding a card link.
+Each 16 second Reel keeps one message and the supplied official carton logo visible throughout. Use clean text with no category badge, separate action screen, masthead, decorative rule, or footer. The first footage library includes sunrise, waves, a park walk, coffee, flowers, and a dog. Footage repeats by category while the message changes. Captions add human commentary without copying the card or adding a card link.
 
 Source and license records are in `content/reel-media.json`. Mixkit footage and music have been selected under their Free Licenses for commercial social use. Music is embedded in the video and appears as original audio. Selecting a platform library song or location tag remains a native app step. Google Fonts files include their OFL licenses.
 

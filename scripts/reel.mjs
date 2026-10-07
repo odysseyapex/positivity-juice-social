@@ -19,7 +19,7 @@ export function reelPlan(day = dayKey()) {
   const card = { ...source, key: source.id, day, date: dateLabel(new Date(`${day}T12:00:00Z`)), category: `${group.name} Pour`, url: `https://positivityjuice.com/card/${source.id}` };
   const message = tidy(card.message), action = tidy(card.action);
   if (!message || !action || message.length > 380 || action.length > 380) throw new Error('Reel copy needs editorial review.');
-  return { day, id: `${day}-${source.id}`, category, categoryName: group.name, card, message, action, duration: 16, video: media.video[category], music: media.music[musicByCategory[category]], captions: { instagram: caption(card, 'instagram').replace('#TodaysPour', '#ALittleGood'), tiktok: caption(card, 'tiktok').replace('#TodaysPour', '#ALittleGood') } };
+  return { day, id: `${day}-${source.id}`, design: 'logo-and-words-v2', category, categoryName: group.name, card, message, action, duration: 16, video: media.video[category], music: media.music[musicByCategory[category]], captions: { instagram: caption(card, 'instagram').replace('#TodaysPour', '#ALittleGood'), tiktok: caption(card, 'tiktok').replace('#TodaysPour', '#ALittleGood') } };
 }
 
 export async function verifyReelSource(plan, fetchImpl = fetch) {
