@@ -6,7 +6,7 @@ The workflow starts before 9 AM and checks again later in the morning. GitHub ca
 
 ## Activation
 
-The initial repository is private and automatic posting is disabled. Public image hosting must be approved and configured before activation. This version uses public GitHub image URLs and requires the repository to be public to publish.
+Public image hosting was approved on October 7, 2026. This repository is public so Buffer can retrieve each card image. The Buffer API key is stored separately as an encrypted GitHub Actions secret.
 
 Connect both brand accounts in Buffer with automatic publishing available. Save the Buffer API key in the GitHub Actions secret named `BUFFER_API_KEY`. Run the workflow manually in preview mode, then publish mode. Verify both posts before setting the repository Actions variable `PUBLISH_ENABLED` to `true`.
 
@@ -16,7 +16,7 @@ To pause automatic posting, set `PUBLISH_ENABLED` to `false`. Posts already queu
 
 The workflow checks today's Eastern date, confirms the public card permalink has matching text, renders the image, and looks for an existing post on each platform. Each submission is recorded before the Buffer request. An uncertain request stops for review instead of attempting another post. Existing drafts, errors, or requests for approval also stop for review.
 
-Card images are stored under `cards/`. Submission records under `state/` contain the date, card key, and Buffer post ID. If the repository is made public, the workflow code, approved brand assets, card artwork, and submission records become public. The API key is never committed. Only the publishing step receives the secret.
+Card images are stored under `cards/`. Submission records under `state/` contain the date, card key, and Buffer post ID. The workflow code, approved brand assets, card artwork, and submission records are public. The API key is never committed. Only the publishing step receives the secret.
 
 If a run fails, open GitHub Actions and read the saved report. Review the corresponding Buffer post before retrying. Never remove a pending submission record until Buffer confirms that no post was created. Keep GitHub workflow failure notifications enabled in your account settings.
 
